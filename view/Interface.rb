@@ -130,7 +130,6 @@ class Interface
  def connection_init
 	self.excecution_controls_sensitive = true
 	@builder["stop"].sensitive = true
-	@builder["open_file"].sensitive = true
 	show_connection_status("Connected")
  end
 
@@ -156,7 +155,6 @@ class Interface
 	@editor.remove_run_cursor
 	self.excecution_controls_sensitive = false
 	@builder["stop"].sensitive = false
-	@builder["open_file"].sensitive = false
 	show_connection_status("Conection closed")
  end
 

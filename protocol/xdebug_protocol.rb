@@ -71,9 +71,14 @@ class XDebugProtocol < XDebugConnection
  end
 
  def get_source(filename)
-	send_command(  'source', { 'f' => filename }){ |message, command,  params,  data|
-		source_received(message, command,  params,  data)
-	}   
+	if @client then
+		send_command(  'source', { 'f' => filename }){ |message, command,  params,  data|
+			source_received(message, command,  params,  data)
+		}   
+	else
+		#offline method only valid in localhost
+		@events.dispatch(:source_received, filename , File.read(filename.gsub("file://",'')))
+	end
  end 
 
  def source_received(message, command,  params,  data)
