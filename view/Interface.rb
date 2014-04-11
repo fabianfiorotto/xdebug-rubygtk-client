@@ -51,7 +51,7 @@ class Interface
    @builder["scrolledwindow1"].add(@sourceview)
 
    @protocol.events.watch(@editor,:source_received, :stack_received )
-   @protocol.events.watch(@editor, :breakpoint_set , :breakpoint_removed , :offline_breakpoint_set,  :offline_breakpoint_removed  )
+   @protocol.events.watch(@editor, :breakpoint_set , :breakpoint_removed , :offline_breakpoint_set,  :offline_breakpoint_removed , :breakpoint_enabled , :breakpoint_disabled )
 
    @trace = Trace.new(@protocol)
    @builder["stack"].add(@trace)

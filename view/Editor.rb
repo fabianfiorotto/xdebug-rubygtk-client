@@ -25,17 +25,18 @@ class Editor
   @source = ""
   @buffer = @widget.buffer
   @breakpoint_tag = @buffer.create_tag("breakpoint_mark",{"paragraph-background"=>"red"} )
+  @disabled_breakpoint_tag = @buffer.create_tag("disabled_breakpoint_mark",{"paragraph-background"=>"moccasin"} )
   @offline_breakpoint_tag = @buffer.create_tag("offline_breakpoint_mark",{"paragraph-background"=>"dark orange"} )
   @runstop_tag = @buffer.create_tag("runstop_mark",{"paragraph-background"=>"green"} )
+  #@widget.set_mark_category_pixbuf('breakpoint_enabled', Gdk::Pixbuf.new(File.dirname(__FILE__)+'/glade/breakpoint.xpm'))
   @stoprun_pos = nil
 
   @widget.show_line_numbers = true
   @widget.insert_spaces_instead_of_tabs = true
   @widget.indent_width = 4
   @widget.show_right_margin = true
-  @widget.right_margin_position = 80
-
-
+  @widget.right_margin_position = 20
+  @widget.left_margin = 5
 
   @widget.signal_connect 'button_press_event' do |widget, event|
 	if event.event_type == Gdk::Event::BUTTON2_PRESS and event.button == 1 then
@@ -174,6 +175,22 @@ class Editor
 	adjustment =  @widget.parent.vadjustment
 	return if adjustment.upper == adjustment.page_size 
 	adjustment.value = adjustment.upper * (line.to_f / @buffer.line_count) 
+ end
+
+ def breakpoint_disabled(breakpoint)
+	if breakpoint.file == @filename then
+		start = @buffer.get_iter_at_line(breakpoint.line)
+		ends = @buffer.get_iter_at_line(breakpoint.line + 1)
+		@buffer.apply_tag(@disabled_breakpoint_tag, start, ends)
+	end
+ end
+
+ def breakpoint_enabled(breakpoint)
+	if breakpoint.file == @filename then
+		start = @buffer.get_iter_at_line(breakpoint.line)
+		ends = @buffer.get_iter_at_line(breakpoint.line + 1)
+		@buffer.remove_tag(@disabled_breakpoint_tag, start, ends)
+	end
  end
 
 end

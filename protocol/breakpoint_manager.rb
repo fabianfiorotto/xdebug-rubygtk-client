@@ -57,7 +57,7 @@ class BreakpointManager
 		breakpoint = @breakpoints.detect{|b| b.file == file && b.line == line }
 		@protocol.send_command("breakpoint_update", { "s" => "enabled", 'd' => breakpoint.breakpoint_id }) do |message,  command,  params,  data|
 			breakpoint.disabled = false
-			@protocol.events.dispatch(:breakpoint_disabled, breakpoint)
+			@protocol.events.dispatch(:breakpoint_enabled, breakpoint)
 		end
 	end
 
@@ -66,7 +66,7 @@ class BreakpointManager
 		breakpoint = @breakpoints.detect{|b| b.file == file && b.line == line }
 		@protocol.send_command("breakpoint_update", { "s" => "disabled"  , 'd' => breakpoint.breakpoint_id }) do |message,  command,  params,  data|
 			breakpoint.disabled = true
-			@protocol.events.dispatch(:breakpoint_enabled, breakpoint)
+			@protocol.events.dispatch(:breakpoint_disabled, breakpoint)
 		end
 	end
 
