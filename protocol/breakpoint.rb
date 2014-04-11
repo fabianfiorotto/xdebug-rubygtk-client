@@ -37,4 +37,8 @@ class Breakpoint
  end
 
 
+ def status
+	@disabled ? "disabled" : "enabled"
+ end
+
 end

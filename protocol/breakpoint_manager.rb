@@ -35,7 +35,7 @@ class BreakpointManager
 			return if  breakpoint.online?
 		end
 		@protocol.events.dispatch(:offline_breakpoint_set,breakpoint)
-		@protocol.send_command("breakpoint_set", {'t' => 'line', 'f' => file, 'n' => line + 1}) do |message,  command,  params,  data|
+		@protocol.send_command("breakpoint_set", {'t' => 'line', 'f' => file, 's' => breakpoint.status ,'n' => line + 1}) do |message,  command,  params,  data|
 			 breakpoint.breakpoint_id =  message.root.attribute('id').to_s
 			 breakpoint.offline = false
 			 @protocol.events.dispatch(:offline_breakpoint_removed,breakpoint)
