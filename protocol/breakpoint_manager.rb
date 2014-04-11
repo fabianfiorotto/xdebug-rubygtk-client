@@ -18,20 +18,30 @@ class BreakpointManager
 
 	def initialize(protocol)
 	 @protocol = protocol
-	 @breakpoints = Hash.new{ |hash, key| hash[key] = {} }
-	 @offline_breakpoints = []
+	 @breakpoints = []
+	end
+
+
+	def offline_breakpoints
+		@breakpoints.select{ |breakpoint| breakpoint.offline }
 	end
 
     def set(file,line)
-		return if at?(file,line)
-		@offline_breakpoints << {line: line , file: file} 
+		breakpoint = @breakpoints.detect{|b| b.file == file && b.line == line }
+		if breakpoint == nil then
+			breakpoint = Breakpoint.new(file,line)
+			@breakpoints << breakpoint
+		else
+			return if breakpoint.online?
+		end
 		@protocol.events.dispatch(:offline_breakpoint_set,file , line)
 		@protocol.send_command("breakpoint_set", {'t' => 'line', 'f' => file, 'n' => line + 1}) do |message,  command,  params,  data|
 			 line = params['n'].to_i - 1
 			 file = params['f']
 			 breakpoint_id = message.root.attribute('id').to_s
-			 @breakpoints[file][line] =  breakpoint_id
-			 @offline_breakpoints.delete({line: line , file: file})
+			 breakpoint = @breakpoints.detect{ |b| b.file == file && b.line == line}
+			 breakpoint.breakpoint_id =  breakpoint_id
+			 breakpoint.offline = false
 			 @protocol.events.dispatch(:offline_breakpoint_removed,file , line)
 			 @protocol.events.dispatch(:breakpoint_set, file , line , breakpoint_id)
 		end 
@@ -39,15 +49,12 @@ class BreakpointManager
 
 
 	def unset(file,line)
-		if @offline_breakpoints.include?({line: line , file: file}) then
-			@offline_breakpoints.delete({line: line , file: file})
-			@protocol.events.dispatch(:offline_breakpoint_removed,file , line)
-		end
-		@protocol.send_command("breakpoint_remove", {'f' => file, 'n' => line + 1 , 'd' => @breakpoints[file][line] }) do |message,  command,  params,  data|
+		breakpoint = @breakpoints.detect{|b| b.file == file && b.line == line }
+		@protocol.send_command("breakpoint_remove", {'f' => file, 'n' => line + 1 , 'd' => breakpoint.breakpoint_id }) do |message,  command,  params,  data|
 			file = params['f']
 			line = params['n'].to_i - 1
-		 	breakpoint_id = @breakpoints[file].delete(line )
-			@protocol.events.dispatch(:breakpoint_removed, file, line, breakpoint_id)
+		 	@breakpoints.delete_if{|b| b.file == file && b.line == line }
+			@protocol.events.dispatch(:breakpoint_removed, file, line, breakpoint.breakpoint_id)
 		end
 	end
 
@@ -61,49 +68,38 @@ class BreakpointManager
 
 
 	def at?(filename,line)
-		 @breakpoints[filename].has_key?(line)  or @offline_breakpoints.include?({line: line , file: filename})
+		 @breakpoints.any?{|b| b.file == filename && b.line == line}
 	end
 
 	def connection_init
-		offline_breakpoints = @offline_breakpoints.clone
-		@offline_breakpoints.clear
-		offline_breakpoints.each do |breakpoint|
-			set(breakpoint[:file],breakpoint[:line])
+		@breakpoints.each do |breakpoint|
+		  if breakpoint.offline && breakpoint.enabled? then
+			set(breakpoint.file ,breakpoint.line)
+		  end
 		end
 	end
 
 	def connection_closed
-		@breakpoints.each_pair{ |file, hash |
-			hash.each_key{ |line|
-				@protocol.events.dispatch(:breakpoint_removed, file, line, @breakpoints[file][line])
-				@protocol.events.dispatch(:offline_breakpoint_set,file , line)
-				@offline_breakpoints << {line: line , file: file}
-			} 
+		@breakpoints.each{ |breakpoint|
+				@protocol.events.dispatch(:breakpoint_removed, breakpoint.file, breakpoint.line, breakpoint.breakpoint_id)
+				@protocol.events.dispatch(:offline_breakpoint_set,breakpoint.file , breakpoint.line)
+				breakpoint.offline = true
 		}
-		@breakpoints.clear
 	end
 
 	def clear
-		breakpoints = @breakpoints.clone
-		breakpoints.each_pair{ |file, hash |
-			hash.each_key{ |line|
-				unset(file,line)
-			} 
+		@breakpoints.each{ | breakpoint |
+			unset(breakpoint.file,breakpoint.line)
 		}
-		@offline_breakpoints.clear
+		@breakpoints.clear
 	end
 
 	require 'csv'
 
    def to_csv
 	CSV.generate do |csv|
-		@breakpoints.each_pair{ |file, hash |
-			hash.each_key{ |line|
-				csv << [file,line]	
-			} 
-		}
-		@offline_breakpoints.each{ |breakpoint|
-				csv << [breakpoint[:file],breakpoint[:line]]	
+		@breakpoints.each{ |breakpoint|
+				csv << [breakpoint.file,breakpoint.line, (breakpoint.offline ? 0 : 1) ]	 
 		}
 	end
    end
@@ -116,7 +112,7 @@ class BreakpointManager
 
    def load_csv(filename)
 	CSV.foreach(filename){ |csv|
-		self.set(csv[0],csv[1].to_i)
+		self.set(csv[0],csv[1].to_i, csv[1].to_i == 0 )
 	}
    end
 

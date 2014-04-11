@@ -16,6 +16,7 @@
 require './protocol/xdebug_connect.rb'
 require './protocol/xdebug_protocol.rb'
 require './protocol/event_manager.rb'
+require './protocol/breakpoint.rb'
 require './protocol/breakpoint_manager.rb'
 
 require './view/Interface.rb'
