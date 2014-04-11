@@ -18,8 +18,17 @@ class Breakpoints < VR::ListView
 
  def initialize(protocol)
 	@protocol = protocol
-	super({:enable => TrueClass , :file => String , :line => Numeric })
-	get_column(0).title = "  "
+	super({:enabled => TrueClass , :file => String , :line => Numeric })
+	column(:enabled).title = "  "
+	renderer(:enabled).signal_connect 'toggled' do |widget, path|
+		row = vr_row(model.get_iter(path))
+		if row[:enabled] then
+			@protocol.breakpoints.enable(row[:file],row[:line])
+		else
+			@protocol.breakpoints.disable(row[:file],row[:line])
+		end
+	end
+
  end
 
  def row_clicked
@@ -36,7 +45,7 @@ class Breakpoints < VR::ListView
 		each_row { |r|
 		 return if r[:file] == breakpoint.file && r[:line] == breakpoint.line 
 		}
-		rowIter = add_row(:enable => breakpoint.enabled? , :file => breakpoint.file, :line => breakpoint.line)
+		rowIter = add_row(:enabled => breakpoint.enabled? , :file => breakpoint.file, :line => breakpoint.line)
  end
 
  def breakpoint_removed(breakpoint)
@@ -52,7 +61,7 @@ class Breakpoints < VR::ListView
 		each_row { |r|
 		 return if r[:file] == breakpoint.file && r[:line] == breakpoint.line 
 		}
-		rowIter = add_row(:enable => breakpoint.enabled? , :file => breakpoint.file, :line => breakpoint.line)
+		rowIter = add_row(:enabled => breakpoint.enabled? , :file => breakpoint.file, :line => breakpoint.line)
  end
 
  def offline_breakpoint_removed(breakpoint)
@@ -62,6 +71,5 @@ class Breakpoints < VR::ListView
 		}
 		model.remove(row) unless row.nil?
  end
-
 
 end

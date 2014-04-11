@@ -36,11 +36,7 @@ class BreakpointManager
 		end
 		@protocol.events.dispatch(:offline_breakpoint_set,breakpoint)
 		@protocol.send_command("breakpoint_set", {'t' => 'line', 'f' => file, 'n' => line + 1}) do |message,  command,  params,  data|
-			 line = params['n'].to_i - 1
-			 file = params['f']
-			 breakpoint_id = message.root.attribute('id').to_s
-			 breakpoint = @breakpoints.detect{ |b| b.file == file && b.line == line}
-			 breakpoint.breakpoint_id =  breakpoint_id
+			 breakpoint.breakpoint_id =  message.root.attribute('id').to_s
 			 breakpoint.offline = false
 			 @protocol.events.dispatch(:offline_breakpoint_removed,breakpoint)
 			 @protocol.events.dispatch(:breakpoint_set, breakpoint)
@@ -51,13 +47,29 @@ class BreakpointManager
 	def unset(file,line)
 		breakpoint = @breakpoints.detect{|b| b.file == file && b.line == line }
 		@protocol.send_command("breakpoint_remove", {'f' => file, 'n' => line + 1 , 'd' => breakpoint.breakpoint_id }) do |message,  command,  params,  data|
-			file = params['f']
-			line = params['n'].to_i - 1
-			breakpoint = @breakpoints.detect{|b| b.file == file && b.line == line }
 		 	@breakpoints.delete(breakpoint)
 			@protocol.events.dispatch(:breakpoint_removed, breakpoint)
 		end
 	end
+
+
+	def enable(file,line)
+		breakpoint = @breakpoints.detect{|b| b.file == file && b.line == line }
+		@protocol.send_command("breakpoint_update", { "s" => "enabled", 'd' => breakpoint.breakpoint_id }) do |message,  command,  params,  data|
+			breakpoint.disabled = false
+			@protocol.events.dispatch(:breakpoint_disabled, breakpoint)
+		end
+	end
+
+
+	def disable(file,line)
+		breakpoint = @breakpoints.detect{|b| b.file == file && b.line == line }
+		@protocol.send_command("breakpoint_update", { "s" => "disabled"  , 'd' => breakpoint.breakpoint_id }) do |message,  command,  params,  data|
+			breakpoint.disabled = true
+			@protocol.events.dispatch(:breakpoint_enabled, breakpoint)
+		end
+	end
+
 
 	def toggle(file,line)
 		if(at?(file,line)) then
