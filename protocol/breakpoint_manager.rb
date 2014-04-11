@@ -32,9 +32,9 @@ class BreakpointManager
 			breakpoint = Breakpoint.new(file,line)
 			@breakpoints << breakpoint
 		else
-			return if breakpoint.online?
+			return if  breakpoint.online?
 		end
-		@protocol.events.dispatch(:offline_breakpoint_set,file , line)
+		@protocol.events.dispatch(:offline_breakpoint_set,breakpoint)
 		@protocol.send_command("breakpoint_set", {'t' => 'line', 'f' => file, 'n' => line + 1}) do |message,  command,  params,  data|
 			 line = params['n'].to_i - 1
 			 file = params['f']
@@ -42,8 +42,8 @@ class BreakpointManager
 			 breakpoint = @breakpoints.detect{ |b| b.file == file && b.line == line}
 			 breakpoint.breakpoint_id =  breakpoint_id
 			 breakpoint.offline = false
-			 @protocol.events.dispatch(:offline_breakpoint_removed,file , line)
-			 @protocol.events.dispatch(:breakpoint_set, file , line , breakpoint_id)
+			 @protocol.events.dispatch(:offline_breakpoint_removed,breakpoint)
+			 @protocol.events.dispatch(:breakpoint_set, breakpoint)
 		end 
 	end
 
@@ -53,8 +53,9 @@ class BreakpointManager
 		@protocol.send_command("breakpoint_remove", {'f' => file, 'n' => line + 1 , 'd' => breakpoint.breakpoint_id }) do |message,  command,  params,  data|
 			file = params['f']
 			line = params['n'].to_i - 1
-		 	@breakpoints.delete_if{|b| b.file == file && b.line == line }
-			@protocol.events.dispatch(:breakpoint_removed, file, line, breakpoint.breakpoint_id)
+			breakpoint = @breakpoints.detect{|b| b.file == file && b.line == line }
+		 	@breakpoints.delete(breakpoint)
+			@protocol.events.dispatch(:breakpoint_removed, breakpoint)
 		end
 	end
 
@@ -81,8 +82,8 @@ class BreakpointManager
 
 	def connection_closed
 		@breakpoints.each{ |breakpoint|
-				@protocol.events.dispatch(:breakpoint_removed, breakpoint.file, breakpoint.line, breakpoint.breakpoint_id)
-				@protocol.events.dispatch(:offline_breakpoint_set,breakpoint.file , breakpoint.line)
+				@protocol.events.dispatch(:breakpoint_removed, breakpoint)
+				@protocol.events.dispatch(:offline_breakpoint_set,breakpoint)
 				breakpoint.offline = true
 		}
 	end

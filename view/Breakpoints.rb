@@ -18,7 +18,8 @@ class Breakpoints < VR::ListView
 
  def initialize(protocol)
 	@protocol = protocol
-	super({:file => String , :line => Numeric })
+	super({:enable => TrueClass , :file => String , :line => Numeric })
+	get_column(0).title = "  "
  end
 
  def row_clicked
@@ -31,33 +32,33 @@ class Breakpoints < VR::ListView
  end
 
 
- def breakpoint_set(file,line,breakpoint_id)
+ def breakpoint_set(breakpoint)
 		each_row { |r|
-		 return if r[:file] == file && r[:line] == line 
+		 return if r[:file] == breakpoint.file && r[:line] == breakpoint.line 
 		}
-		rowIter = add_row(:file => file, :line => line)
+		rowIter = add_row(:enable => breakpoint.enabled? , :file => breakpoint.file, :line => breakpoint.line)
  end
 
- def breakpoint_removed(file,line,breakpoint_id)
+ def breakpoint_removed(breakpoint)
 		row = nil
 		each_row { |r|
-		 row = r if r[:file] == file && r[:line] == line 
+		 row = r if r[:file] == breakpoint.file && r[:line] == breakpoint.line 
 		}
 		model.remove(row) unless row.nil?
  end
 
 
- def offline_breakpoint_set(file,line)
+ def offline_breakpoint_set(breakpoint)
 		each_row { |r|
-		 return if r[:file] == file && r[:line] == line 
+		 return if r[:file] == breakpoint.file && r[:line] == breakpoint.line 
 		}
-		rowIter = add_row(:file => file, :line => line)
+		rowIter = add_row(:enable => breakpoint.enabled? , :file => breakpoint.file, :line => breakpoint.line)
  end
 
- def offline_breakpoint_removed(file,line)
+ def offline_breakpoint_removed(breakpoint)
 		row = nil
 		each_row { |r|
-		 row = r if r[:file] == file && r[:line] == line 
+		 row = r if r[:file] == breakpoint.file && r[:line] == breakpoint.line 
 		}
 		model.remove(row) unless row.nil?
  end

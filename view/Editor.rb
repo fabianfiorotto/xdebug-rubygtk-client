@@ -115,34 +115,34 @@ class Editor
 	@buffer.apply_tag(@runstop_tag, start, ends)
  end
 
- def breakpoint_set(file , lineno, breakpoint_id)
-	if file == @filename then
-		start = @buffer.get_iter_at_line(lineno)
-		ends = @buffer.get_iter_at_line(lineno + 1)
+ def breakpoint_set(breakpoint)
+	if breakpoint.file == @filename then
+		start = @buffer.get_iter_at_line(breakpoint.line)
+		ends = @buffer.get_iter_at_line(breakpoint.line + 1)
 		@buffer.apply_tag(@breakpoint_tag, start, ends)
 	end
  end
 
- def breakpoint_removed(file , lineno, breakpoint_id)
-	if file == @filename then
-		start = @buffer.get_iter_at_line(lineno)
-		ends = @buffer.get_iter_at_line(lineno + 1)
+ def breakpoint_removed(breakpoint)
+	if breakpoint.file == @filename then
+		start = @buffer.get_iter_at_line(breakpoint.line)
+		ends = @buffer.get_iter_at_line(breakpoint.line + 1)
 		@buffer.remove_tag(@breakpoint_tag, start, ends)
 	end
  end 
 
- def offline_breakpoint_set(file , lineno)
-	if file == @filename then
-		start = @buffer.get_iter_at_line(lineno)
-		ends = @buffer.get_iter_at_line(lineno + 1)
+ def offline_breakpoint_set(breakpoint)
+	if breakpoint.file == @filename then
+		start = @buffer.get_iter_at_line(breakpoint.line)
+		ends = @buffer.get_iter_at_line(breakpoint.line + 1)
 		@buffer.apply_tag(@offline_breakpoint_tag, start, ends)
 	end
  end
 
- def offline_breakpoint_removed(file , lineno)
-	if file == @filename then
-		start = @buffer.get_iter_at_line(lineno)
-		ends = @buffer.get_iter_at_line(lineno + 1)
+ def offline_breakpoint_removed(breakpoint)
+	if breakpoint.file == @filename then
+		start = @buffer.get_iter_at_line(breakpoint.line)
+		ends = @buffer.get_iter_at_line(breakpoint.line + 1)
 		@buffer.remove_tag(@offline_breakpoint_tag, start, ends)
 	end
  end
