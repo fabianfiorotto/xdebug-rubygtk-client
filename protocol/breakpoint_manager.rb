@@ -46,6 +46,11 @@ class BreakpointManager
 
 	def unset(file,line)
 		breakpoint = @breakpoints.detect{|b| b.file == file && b.line == line }
+		if breakpoint.offline then
+		 	@breakpoints.delete(breakpoint)
+			@protocol.events.dispatch(:offline_breakpoint_removed,breakpoint)
+			return
+		end
 		@protocol.send_command("breakpoint_remove", {'f' => file, 'n' => line + 1 , 'd' => breakpoint.breakpoint_id }) do |message,  command,  params,  data|
 		 	@breakpoints.delete(breakpoint)
 			@protocol.events.dispatch(:breakpoint_removed, breakpoint)
