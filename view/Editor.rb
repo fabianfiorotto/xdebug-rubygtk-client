@@ -129,6 +129,7 @@ class Editor
 		start = @buffer.get_iter_at_line(breakpoint.line)
 		ends = @buffer.get_iter_at_line(breakpoint.line + 1)
 		@buffer.remove_tag(@breakpoint_tag, start, ends)
+		@buffer.remove_tag(@disabled_breakpoint_tag, start, ends)
 	end
  end 
 
