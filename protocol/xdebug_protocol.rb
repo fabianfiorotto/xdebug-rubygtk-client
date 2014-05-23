@@ -163,7 +163,7 @@ class XDebugProtocol < XDebugConnection
 		end
 	end
 	if property[:type] == "object" then
-		property[:classname] =  property[:children].shift[:value]
+		property[:classname] =  element.attribute('classname') != nil ? element.attribute('classname').to_s : property[:children].shift[:value] 
 	end
 	if property[:type] == "string" && property[:name] != "CLASSNAME" then
 		property[:value] = Base64.decode64(property[:value])
